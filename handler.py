@@ -1,11 +1,13 @@
 from flask import Blueprint, current_app, make_response, jsonify
 import pywebostv.controls as tv_cntl
+from pywebostv.model import AudioOutputSource, InputSource
 import tv
 
 tv_bp = Blueprint('tv', __name__)
 tv_key_bp = Blueprint('key', __name__)
-tv_src_bp = Blueprint('src', __name__)
+# tv_src_bp = Blueprint('src', __name__)
 tv_audio_bp = Blueprint('audio', __name__)
+
 
 @tv_bp.route('/tv/<fn>', methods=['PUT'])
 def put_fn(fn):
@@ -15,7 +17,7 @@ def put_fn(fn):
         response = make_response(jsonify({'msg': f'Invalid function: {fn}'}))
         response.status_code = 400
         return response
-    
+
     tv_client = current_app.tv_client
     if fn == 'ch_list':
         tv_cntl.TvControl(tv_client).channel_list()
@@ -33,10 +35,12 @@ def put_fn(fn):
     response.status_code = 200
     return response
 
-@tv_key_bp.route('/tv/key/<key>', methods=['PUT'])
+
+@tv_key_bp.route('/key/<key>', methods=['PUT'])
 def put_key(key):
     key_allow = ['menu', 'back', 'up', 'down', 'left', 'right']
-    key_allow += ['home', 'volume_up', 'volume_down', 'channel_up', 'channel_down']
+    key_allow += ['home', 'volume_up',
+                  'volume_down', 'channel_up', 'channel_down']
 
     if key not in key_allow:
         response = make_response(jsonify({'msg': f'Invalid key: {key}'}))
@@ -50,19 +54,25 @@ def put_key(key):
     response.status_code = 200
     return response
 
-@tv_audio_bp.route('/tv/audio', methods=['GET'])
+
+@tv_audio_bp.route('/audio', methods=['GET'])
 def get_audio():
-    tv_client = current_app.tv_client
-    audio_out = tv_cntl.MediaControl(tv_client).get_audio_output()
+    # tv_client = current_app.tv_client
+    # audio_out = tv_cntl.MediaControl(tv_client).get_audio_output()
+    # print(audio_out)
+    audio_out = ['tv_speaker', 'external_optical']
 
     response = make_response(jsonify({'data': audio_out}))
     response.status_code = 200
     return response
 
-@tv_audio_bp.route('/tv/audio/<out>', methods=['PUT'])
+
+@tv_audio_bp.route('/audio/<out>', methods=['PUT'])
 def put_audio(out):
     tv_client = current_app.tv_client
-    tv_cntl.MediaControl(tv_client).set_audio_output(out)
+    tv_cntl.MediaControl(tv_client).set_audio_output(AudioOutputSource(out))
+
+    notify_tv(f'Set audio output to {out}')
 
     response = make_response(jsonify({'msg': f'set audio output to {out}'}))
     response.status_code = 200
@@ -70,6 +80,7 @@ def put_audio(out):
 
 # ---
 
+
 def notify_tv(msg):
     tv_client = current_app.tv_client
-    tv_cntl.NotificationControl(tv_client).notify(msg)
+    tv_cntl.SystemControl(tv_client).notify(msg)

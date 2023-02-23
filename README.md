@@ -20,6 +20,6 @@ python app.py
 
 update `requirements.txt`:
 ```bash
-pip freez > requirements.txt
+pip freeze > requirements.txt
 ```
 
