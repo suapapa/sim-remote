@@ -35,4 +35,6 @@ def connect():
     return client
 
 def turn_on():
-    wakeonlan.send_magic_packet(store['mac'])
+    mac = store['mac']
+    print(f"Turning on TV at {mac}...")
+    wakeonlan.send_magic_packet(mac)

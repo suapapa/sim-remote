@@ -1,5 +1,6 @@
 from flask import Blueprint, current_app, make_response, jsonify
 import pywebostv.controls as tv_cntl
+import tv
 
 tv_bp = Blueprint('tv', __name__)
 tv_key_bp = Blueprint('key', __name__)
@@ -8,7 +9,7 @@ tv_audio_bp = Blueprint('audio', __name__)
 
 @tv_bp.route('/tv/<fn>', methods=['PUT'])
 def put_fn(fn):
-    fn_allow = ['power_off', 'power_on', 'ch_list']
+    fn_allow = ['off', 'on', 'ch_list']
 
     if fn not in fn_allow:
         response = make_response(jsonify({'msg': f'Invalid function: {fn}'}))
@@ -18,11 +19,19 @@ def put_fn(fn):
     tv_client = current_app.tv_client
     if fn == 'ch_list':
         tv_cntl.TvControl(tv_client).channel_list()
-    elif fn == 'power_off':
+    elif fn == 'off':
         tv_cntl.SystemControl(tv_client).power_off()
-    # elif fn == 'power_on':
-    #     tv_cntl.SystemControl(tv_client).power_on()
+    elif fn == 'on':
+        try:
+            tv.turn_on()
+        except:
+            response = make_response(jsonify({'msg': f'Failed to turn on TV'}))
+            response.status_code = 500
+            return response
 
+    response = make_response(jsonify({'msg': f'{fn} sent'}))
+    response.status_code = 200
+    return response
 
 @tv_key_bp.route('/tv/key/<key>', methods=['PUT'])
 def put_key(key):
