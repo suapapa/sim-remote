@@ -25,7 +25,7 @@ def put_fn(fn):
         tv_cntl.SystemControl(tv_client).power_off()
     elif fn == 'on':
         try:
-            tv.turn_on()
+            tv.turn_on(current_app.tv_mac)
         except:
             response = make_response(jsonify({'msg': f'Failed to turn on TV'}))
             response.status_code = 500

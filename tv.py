@@ -23,6 +23,8 @@ def connect():
         client = tv_conn.WebOSClient(tv_host, secure=False)
         client.connect()
         store['host'] = tv_host
+        mac = getmac.get_mac_address(ip=tv_host, network_request=True)
+        store['mac'] = mac
 
     for status in client.register(store):
         if status == tv_conn.WebOSClient.PROMPTED:
@@ -30,16 +32,12 @@ def connect():
         elif status == tv_conn.WebOSClient.REGISTERED:
             print("Registration successful!")
 
-    mac = getmac.get_mac_address(ip=tv_host, network_request=True)
-    store['mac'] = mac
-
     print(store)
 
     file_store.save_store(store)
-    return client
+    return client, store['mac']
 
 
-def turn_on():
-    mac = store['mac']
+def turn_on(mac):
     print(f"Turning on TV at {mac}...")
     wakeonlan.send_magic_packet(mac)
