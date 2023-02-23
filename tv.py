@@ -1,7 +1,9 @@
 import pywebostv.connection as tv_conn
 import pywebostv.discovery as tv_disc
+import getmac, wakeonlan
 import file_store
 
+store = {}
 
 def connect():
     store = file_store.load_store()
@@ -26,5 +28,11 @@ def connect():
         elif status == tv_conn.WebOSClient.REGISTERED:
             print("Registration successful!")
 
+    mac = getmac.get_mac_address(ip=tv_host, network_request=True)
+    store['mac'] = mac
+
     file_store.save_store(store)
     return client
+
+def turn_on():
+    wakeonlan.send_magic_packet(store['mac'])
