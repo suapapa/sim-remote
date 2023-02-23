@@ -38,24 +38,24 @@ def put_fn(fn):
 
 @tv_key_bp.route('/key/<key>', methods=['PUT'])
 def put_key(key):
-    key_allow = ['menu', 'back', 'up', 'down', 'left', 'right']
-    key_allow += ['home', 'volume_up',
-                  'volume_down', 'channel_up', 'channel_down']
+    key_allow = ['up', 'down', 'left', 'right', 'ok', 'dash', 'back', 'home']
+    key_allow += ['volume_up', 'volume_down', 'channel_up', 'channel_down']
 
     if key not in key_allow:
         response = make_response(jsonify({'msg': f'Invalid key: {key}'}))
         response.status_code = 400
         return response
 
-    tv_client = current_app.tv_client
-    tv_cntl.InputControl(tv_client).set_input(key)
+    input_ctl = tv_cntl.InputControl(current_app.tv_client)
+    input_ctl.connect_input()
+    exec(f'input_ctl.{key}()')
 
     response = make_response(jsonify({'msg': f'{key} sent'}))
     response.status_code = 200
     return response
 
 
-@tv_audio_bp.route('/audio', methods=['GET'])
+@ tv_audio_bp.route('/audio', methods=['GET'])
 def get_audio():
     # tv_client = current_app.tv_client
     # audio_out = tv_cntl.MediaControl(tv_client).get_audio_output()
@@ -67,7 +67,7 @@ def get_audio():
     return response
 
 
-@tv_audio_bp.route('/audio/<out>', methods=['PUT'])
+@ tv_audio_bp.route('/audio/<out>', methods=['PUT'])
 def put_audio(out):
     tv_client = current_app.tv_client
     tv_cntl.MediaControl(tv_client).set_audio_output(AudioOutputSource(out))
