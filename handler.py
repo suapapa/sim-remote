@@ -1,12 +1,13 @@
 from flask import Blueprint, current_app, make_response, jsonify
 import pywebostv.controls as tv_cntl
-from pywebostv.model import AudioOutputSource, InputSource
+from pywebostv.model import AudioOutputSource, Application
 import tv
 
 tv_bp = Blueprint('tv', __name__)
 tv_key_bp = Blueprint('key', __name__)
 tv_src_bp = Blueprint('src', __name__)
 tv_audio_bp = Blueprint('audio', __name__)
+tv_app_bp = Blueprint('app', __name__)
 
 
 @tv_bp.route('/tv/<fn>', methods=['PUT'])
@@ -114,6 +115,46 @@ def put_audio(out):
     notify_tv(f'Set audio output to {out}')
 
     response = make_response(jsonify({'msg': f'set audio output to {out}'}))
+    response.status_code = 200
+    return response
+
+
+@ tv_app_bp.route('/app', methods=['GET'])
+def get_app():
+    tv_client = current_app.tv_client
+    apps = tv_cntl.ApplicationControl(tv_client).list_apps()
+    app_titles = list(map(lambda x: x['title'], apps))
+    print(app_titles)
+
+    response = make_response(jsonify({'data': app_titles}))
+    response.status_code = 200
+    return response
+
+
+@ tv_app_bp.route('/app/<app>', methods=['PUT'])
+def put_app(app):
+    tv_client = current_app.tv_client
+    apps = tv_cntl.ApplicationControl(tv_client).list_apps()
+    app_titles = list(map(lambda x: x['title'], apps))
+    # app_ids = list(map(lambda x: x['id'], apps))
+
+    i = 0
+    for a in app_titles:
+        if app == a:  # or app == app_ids[i]:
+            break
+        i += 1
+
+    if i == len(app_titles):
+        response = make_response(
+            jsonify({'msg': f'Invalid application: {app}'}))
+        response.status_code = 400
+        return response
+
+    tv_cntl.ApplicationControl(tv_client).launch(Application(apps[i]))
+
+    notify_tv(f'Set app to {app}')
+
+    response = make_response(jsonify({'msg': f'set application to {app}'}))
     response.status_code = 200
     return response
 
