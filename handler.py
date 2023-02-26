@@ -37,7 +37,7 @@ def put_fn(fn):
 
 @tv_key_bp.route('/key/<key>', methods=['PUT'])
 def put_key(key):
-    key_allow = ['up', 'down', 'left', 'right', 'ok', 'dash', 'back', 'home']
+    key_allow = ['up', 'down', 'left', 'right', 'ok', 'info', 'back', 'home']
     key_allow += ['volume_up', 'volume_down', 'channel_up', 'channel_down']
 
     if key not in key_allow:
