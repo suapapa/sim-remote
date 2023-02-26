@@ -22,8 +22,9 @@ class TV:
         if len(hosts) == 0:
             raise Exception("No TV found!")
         tv_host = list(hosts)[0]
-        tv_mac = getmac.get_mac_address(ip=tv_host, network_request=True)
         self._store['host'] = tv_host
+        tv_mac = getmac.get_mac_address(ip=tv_host, network_request=True)
+        self._store['mac'] = tv_mac
         file_store.save_store(self._store)
         self._discovered = True
 
@@ -94,8 +95,10 @@ class TV:
         self._webos_client.close()
 
     def turn_on(self):
-        tv_host = self._store['host']
-        mac = getmac.get_mac_address(ip=tv_host, network_request=True)
-        print(f"Turning on TV at {mac}...")
-        wakeonlan.send_magic_packet(mac)
+        if 'mac' not in self._store:
+            raise Exception("TV host not found!")
+
+        tv_mac = self._store['mac']
+        print(f"Turning on TV at {tv_mac}...")
+        wakeonlan.send_magic_packet(tv_mac)
         self._connect()
