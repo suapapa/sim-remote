@@ -1,4 +1,4 @@
-# sim-remote
+# simremote
 
 ## developement
 

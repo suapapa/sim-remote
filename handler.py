@@ -1,14 +1,11 @@
 from flask import Blueprint, current_app, make_response, jsonify
-import pywebostv.controls as tv_cntl
 from pywebostv.model import AudioOutputSource, Application
-import tv
 
 tv_bp = Blueprint('tv', __name__)
 tv_key_bp = Blueprint('key', __name__)
 tv_src_bp = Blueprint('src', __name__)
 tv_audio_bp = Blueprint('audio', __name__)
 tv_app_bp = Blueprint('app', __name__)
-
 
 @tv_bp.route('/tv/<fn>', methods=['PUT'])
 def put_fn(fn):
@@ -19,14 +16,14 @@ def put_fn(fn):
         response.status_code = 400
         return response
 
-    tv_client = current_app.tv_client
+    atv = current_app.tv
     if fn == 'ch_list':
-        tv_cntl.TvControl(tv_client).channel_list()
+        atv.tv_ctl.channel_list()
     elif fn == 'off':
-        tv_cntl.SystemControl(tv_client).power_off()
+        atv.system_ctl.power_off()
     elif fn == 'on':
         try:
-            tv.turn_on(current_app.tv_mac)
+            atv.turn_on()
         except:
             response = make_response(jsonify({'msg': f'Failed to turn on TV'}))
             response.status_code = 500
@@ -47,8 +44,8 @@ def put_key(key):
         response.status_code = 400
         return response
 
-    input_ctl = tv_cntl.InputControl(current_app.tv_client)
-    input_ctl.connect_input()
+    atv = current_app.tv
+    input_ctl = atv.input_ctl
     exec(f'input_ctl.{key}()')
 
     response = make_response(jsonify({'msg': f'{key} sent'}))
@@ -58,8 +55,8 @@ def put_key(key):
 
 @ tv_src_bp.route('/src', methods=['GET'])
 def get_src():
-    tv_client = current_app.tv_client
-    srcs = tv_cntl.SourceControl(tv_client).list_sources()
+    atv = current_app.tv
+    srcs = atv.source_ctl.list_sources()
     src_labels = list(map(lambda x: x['label'], srcs))
 
     response = make_response(jsonify({'data': src_labels}))
@@ -71,9 +68,8 @@ def get_src():
 def put_src(src):
     print(f'src: {src}')
 
-    tv_client = current_app.tv_client
-
-    srcs = tv_cntl.SourceControl(tv_client).list_sources()
+    atv = current_app.tv
+    srcs = atv.source_ctl.list_sources()
     src_labels = list(map(lambda x: x['label'], srcs))
     i = 0
     for s in src_labels:
@@ -86,9 +82,8 @@ def put_src(src):
         response.status_code = 400
         return response
 
-    tv_cntl.SourceControl(tv_client).set_source(srcs[i])
-
-    notify_tv(f'Set source to {src}')
+    atv.source_ctl.set_source(srcs[i])
+    tv.popup(f'Set source to {src}')
 
     response = make_response(jsonify({'msg': f'set source to {src}'}))
     response.status_code = 200
@@ -109,10 +104,9 @@ def get_audio():
 
 @ tv_audio_bp.route('/audio/<out>', methods=['PUT'])
 def put_audio(out):
-    tv_client = current_app.tv_client
-    tv_cntl.MediaControl(tv_client).set_audio_output(AudioOutputSource(out))
-
-    notify_tv(f'Set audio output to {out}')
+    atv = current_app.tv
+    atv.media_ctl.set_audio_output(AudioOutputSource(out))
+    tv.popup(f'Set audio output to {out}')
 
     response = make_response(jsonify({'msg': f'set audio output to {out}'}))
     response.status_code = 200
@@ -121,8 +115,8 @@ def put_audio(out):
 
 @ tv_app_bp.route('/app', methods=['GET'])
 def get_app():
-    tv_client = current_app.tv_client
-    apps = tv_cntl.ApplicationControl(tv_client).list_apps()
+    atv = current_app.tv
+    apps = atv.application_ctl.list_apps()
     app_titles = list(map(lambda x: x['title'], apps))
     print(app_titles)
 
@@ -133,10 +127,9 @@ def get_app():
 
 @ tv_app_bp.route('/app/<app>', methods=['PUT'])
 def put_app(app):
-    tv_client = current_app.tv_client
-    apps = tv_cntl.ApplicationControl(tv_client).list_apps()
+    atv = current_app.tv
+    apps = atv.application_ctl.list_apps()
     app_titles = list(map(lambda x: x['title'], apps))
-    # app_ids = list(map(lambda x: x['id'], apps))
 
     i = 0
     for a in app_titles:
@@ -150,17 +143,9 @@ def put_app(app):
         response.status_code = 400
         return response
 
-    tv_cntl.ApplicationControl(tv_client).launch(Application(apps[i]))
-
-    notify_tv(f'Set app to {app}')
+    atv.application_ctl.launch(Application(apps[i]))
+    tv.popup(f'Set app to {app}')
 
     response = make_response(jsonify({'msg': f'set application to {app}'}))
     response.status_code = 200
     return response
-
-# ---
-
-
-def notify_tv(msg):
-    tv_client = current_app.tv_client
-    tv_cntl.SystemControl(tv_client).notify(msg)
