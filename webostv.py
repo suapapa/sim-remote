@@ -13,6 +13,10 @@ class TV:
         self._store = file_store.load_store()
 
     def _discover(self):
+        if 'host' in self._store:
+            self._discovered = True
+            return
+
         if self._discovered:
             return
 
