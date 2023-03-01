@@ -23,6 +23,8 @@ def put_fn(fn):
             atv.get_system_ctl().power_off()
         except Exception as e:
             print(f"Caught an exception: {e}")
+            # try connecting again
+            atv.connect()
             return resp_msg(f'Failed to turn off TV', 200)
     elif fn == 'on':
         try:

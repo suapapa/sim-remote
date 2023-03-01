@@ -32,7 +32,7 @@ class TV:
         file_store.save_store(self._store)
         self._discovered = True
 
-    def _connect(self):
+    def connect(self):
         self._discover()
 
         if self._connected:
@@ -67,31 +67,31 @@ class TV:
         self._connected = True
 
     def get_media_ctl(self):
-        self._connect()
+        self.connect()
         return self._meida_ctl
 
     def get_tv_ctl(self):
-        self._connect()
+        self.connect()
         return self._tv_ctl
 
     def get_system_ctl(self):
-        self._connect()
+        self.connect()
         return self._system_ctl
 
     def get_application_ctl(self):
-        self._connect()
+        self.connect()
         return self._application_ctl
 
     def get_input_ctl(self):
-        self._connect()
+        self.connect()
         return self._input_ctl
 
     def get_source_ctl(self):
-        self._connect()
+        self.connect()
         return self._source_ctl
 
     def popup(self, msg):
-        self._connect()
+        self.connect()
         self._system_ctl.notify(msg)
 
     def close(self):
@@ -105,4 +105,4 @@ class TV:
         tv_mac = self._store['mac']
         print(f"Turning on TV at {tv_mac}...")
         wakeonlan.send_magic_packet(tv_mac)
-        self._connect()
+        self.connect()
