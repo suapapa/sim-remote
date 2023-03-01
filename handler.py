@@ -13,15 +13,17 @@ def put_fn(fn):
     fn_allow = ['off', 'on', 'ch_list']
 
     if fn not in fn_allow:
-        response = make_response(jsonify({'msg': f'Invalid function: {fn}'}))
-        response.status_code = 400
-        return response
+        return resp_msg(f'Invalid function: {fn}', 400)
 
     atv = current_app.tv
     if fn == 'ch_list':
         atv.get_tv_ctl().channel_list()
     elif fn == 'off':
-        atv.get_system_ctl().power_off()
+        try:
+            atv.get_system_ctl().power_off()
+        except Exception as e:
+            print(f"Caught an exception: {e}")
+            return resp_msg(f'Failed to turn off TV', 200)
     elif fn == 'on':
         try:
             atv.turn_on()
@@ -30,9 +32,7 @@ def put_fn(fn):
             response.status_code = 500
             return response
 
-    response = make_response(jsonify({'msg': f'{fn} sent'}))
-    response.status_code = 200
-    return response
+    return resp_msg(f'{fn} sent', 200)
 
 
 @tv_key_bp.route('/key/<key>', methods=['PUT'])
@@ -49,9 +49,7 @@ def put_key(key):
     input_ctl = atv.get_input_ctl()
     exec(f'input_ctl.{key}()')
 
-    response = make_response(jsonify({'msg': f'{key} sent'}))
-    response.status_code = 200
-    return response
+    return resp_data(f'{key} sent', 200)
 
 
 @ tv_src_bp.route('/src', methods=['GET'])
@@ -60,9 +58,7 @@ def get_src():
     srcs = atv.get_source_ctl().list_sources()
     src_labels = list(map(lambda x: x['label'], srcs))
 
-    response = make_response(jsonify({'data': src_labels}))
-    response.status_code = 200
-    return response
+    return resp_data(src_labels, 200)
 
 
 @ tv_src_bp.route('/src/<src>', methods=['PUT'])
@@ -86,9 +82,7 @@ def put_src(src):
     atv.get_source_ctl().set_source(srcs[i])
     atv.popup(f'Set source to {src}')
 
-    response = make_response(jsonify({'msg': f'set source to {src}'}))
-    response.status_code = 200
-    return response
+    return resp_msg(f'set source to {src}', 200)
 
 
 @ tv_audio_bp.route('/audio', methods=['GET'])
@@ -98,9 +92,7 @@ def get_audio():
     # print(audio_out)
     audio_out = ['tv_speaker', 'external_optical']
 
-    response = make_response(jsonify({'data': audio_out}))
-    response.status_code = 200
-    return response
+    return resp_data(audio_out, 200)
 
 
 @ tv_audio_bp.route('/audio/<out>', methods=['PUT'])
@@ -109,9 +101,7 @@ def put_audio(out):
     atv.get_media_ctl().set_audio_output(AudioOutputSource(out))
     atv.popup(f'Set audio output to {out}')
 
-    response = make_response(jsonify({'msg': f'set audio output to {out}'}))
-    response.status_code = 200
-    return response
+    return resp_msg(f'set audio output to {out}', 200)
 
 
 @ tv_app_bp.route('/app', methods=['GET'])
@@ -121,9 +111,7 @@ def get_app():
     app_titles = list(map(lambda x: x['title'], apps))
     print(app_titles)
 
-    response = make_response(jsonify({'data': app_titles}))
-    response.status_code = 200
-    return response
+    return resp_data(app_titles, 200)
 
 
 @ tv_app_bp.route('/app/<app>', methods=['PUT'])
@@ -139,14 +127,21 @@ def put_app(app):
         i += 1
 
     if i == len(app_titles):
-        response = make_response(
-            jsonify({'msg': f'Invalid application: {app}'}))
-        response.status_code = 400
-        return response
+        return resp_msg(f'Invalid application: {app}', 400)
 
     atv.get_application_ctl().launch(Application(apps[i]))
     atv.popup(f'Set app to {app}')
 
-    response = make_response(jsonify({'msg': f'set application to {app}'}))
-    response.status_code = 200
+    return resp_msg(f'set application to {app}', 200)
+
+
+def resp_msg(msg, status_code):
+    response = make_response(jsonify({'msg': msg}))
+    response.status_code = status_code
+    return response
+
+
+def resp_data(data, status_code):
+    response = make_response(jsonify({'data': data}))
+    response.status_code = status_code
     return response
