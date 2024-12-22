@@ -29,10 +29,10 @@ def put_fn(fn):
     elif fn == 'on':
         try:
             atv.turn_on()
-        except:
-            response = make_response(jsonify({'msg': f'Failed to turn on TV'}))
-            response.status_code = 500
-            return response
+        except Exception as e:
+            print(f"Caught an exception: {e}")
+            atv.disconnect()
+            return resp_msg(f'Failed to turn on TV', 500)
 
     return resp_msg(f'{fn} sent', 200)
 
@@ -43,22 +43,30 @@ def put_key(key):
     key_allow += ['volume_up', 'volume_down', 'channel_up', 'channel_down']
 
     if key not in key_allow:
-        response = make_response(jsonify({'msg': f'Invalid key: {key}'}))
-        response.status_code = 400
-        return response
+        return resp_msg(f'Invalid key: {key}', 400)
 
-    atv = current_app.tv
-    input_ctl = atv.get_input_ctl()
-    exec(f'input_ctl.{key}()')
+    try:
+        atv = current_app.tv
+        input_ctl = atv.get_input_ctl()
+        exec(f'input_ctl.{key}()')
+    except Exception as e:
+        print(f"Caught an exception: {e}")
+        atv.disconnect()
+        return resp_msg(f'Failed to send key: {key}',500)
 
-    return resp_data(f'{key} sent', 200)
+    return resp_msg(f'{key} sent', 200)
 
 
 @ tv_src_bp.route('/src', methods=['GET'])
 def get_src():
     atv = current_app.tv
-    srcs = atv.get_source_ctl().list_sources()
-    src_labels = list(map(lambda x: x['label'], srcs))
+    try:
+        srcs = atv.get_source_ctl().list_sources()
+        src_labels = list(map(lambda x: x['label'], srcs))
+    except Exception as e:
+        print(f"Caught an exception: {e}")
+        atv.disconnect()
+        return resp_msg(f'Failed to get source', 500)
 
     return resp_data(src_labels, 200)
 
@@ -67,22 +75,25 @@ def get_src():
 def put_src(src):
     print(f'src: {src}')
 
-    atv = current_app.tv
-    srcs = atv.get_source_ctl().list_sources()
-    src_labels = list(map(lambda x: x['label'], srcs))
-    i = 0
-    for s in src_labels:
-        if src == s:
-            break
-        i += 1
+    try:
+        atv = current_app.tv
+        srcs = atv.get_source_ctl().list_sources()
+        src_labels = list(map(lambda x: x['label'], srcs))
+        i = 0
+        for s in src_labels:
+            if src == s:
+                break
+            i += 1
 
-    if i == len(src_labels):
-        response = make_response(jsonify({'msg': f'Invalid source: {src}'}))
-        response.status_code = 400
-        return response
+        if i == len(src_labels):
+            return resp_msg(f'Invalid source: {src}', 400)
 
-    atv.get_source_ctl().set_source(srcs[i])
-    atv.popup(f'Set source to {src}')
+        atv.get_source_ctl().set_source(srcs[i])
+        atv.popup(f'Set source to {src}')
+    except Exception as e:
+        print(f"Caught an exception: {e}")
+        atv.disconnect()
+        return resp_msg(f'Failed to put source', 500)
 
     return resp_msg(f'set source to {src}', 200)
 
@@ -99,40 +110,55 @@ def get_audio():
 
 @ tv_audio_bp.route('/audio/<out>', methods=['PUT'])
 def put_audio(out):
-    atv = current_app.tv
-    atv.get_media_ctl().set_audio_output(AudioOutputSource(out))
-    atv.popup(f'Set audio output to {out}')
+    try:
+        atv = current_app.tv
+        atv.get_media_ctl().set_audio_output(AudioOutputSource(out))
+        atv.popup(f'Set audio output to {out}')
+    except Exception as e:
+        print(f"Caught an exception: {e}")
+        atv.disconnect()
+        return resp_msg(f'Failed to set audio output to {out}', 500)
 
     return resp_msg(f'set audio output to {out}', 200)
 
 
 @ tv_app_bp.route('/app', methods=['GET'])
 def get_app():
-    atv = current_app.tv
-    apps = atv.get_application_ctl().list_apps()
-    app_titles = list(map(lambda x: x['title'], apps))
-    print(app_titles)
+    try:
+        atv = current_app.tv
+        apps = atv.get_application_ctl().list_apps()
+        app_titles = list(map(lambda x: x['title'], apps))
+        print(app_titles)
+    except Exception as e:
+        print(f"Caught an exception: {e}")
+        atv.disconnect()
+        return resp_msg(f'Failed to get applications', 500)
 
     return resp_data(app_titles, 200)
 
 
 @ tv_app_bp.route('/app/<app>', methods=['PUT'])
 def put_app(app):
-    atv = current_app.tv
-    apps = atv.get_application_ctl().list_apps()
-    app_titles = list(map(lambda x: x['title'], apps))
+    try:
+        atv = current_app.tv
+        apps = atv.get_application_ctl().list_apps()
+        app_titles = list(map(lambda x: x['title'], apps))
 
-    i = 0
-    for a in app_titles:
-        if app == a:  # or app == app_ids[i]:
-            break
-        i += 1
+        i = 0
+        for a in app_titles:
+            if app == a:  # or app == app_ids[i]:
+                break
+            i += 1
 
-    if i == len(app_titles):
-        return resp_msg(f'Invalid application: {app}', 400)
+        if i == len(app_titles):
+            return resp_msg(f'Invalid application: {app}', 400)
 
-    atv.get_application_ctl().launch(Application(apps[i]))
-    atv.popup(f'Set app to {app}')
+        atv.get_application_ctl().launch(Application(apps[i]))
+        atv.popup(f'Set app to {app}')
+    except Exception as e:
+        print(f"Caught an exception: {e}")
+        atv.disconnect()
+        return resp_msg(f'Failed to put applications', 500)
 
     return resp_msg(f'set application to {app}', 200)
 

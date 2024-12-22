@@ -66,6 +66,11 @@ class TV:
 
         self._connected = True
 
+    def disconnect(self):
+        if self._connected:
+            self._webos_client.disconnect()
+            self._connected = False
+
     def get_media_ctl(self):
         self.connect()
         return self._meida_ctl
