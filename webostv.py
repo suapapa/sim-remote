@@ -30,6 +30,8 @@ class TV:
         tv_mac = getmac.get_mac_address(ip=tv_host, network_request=True)
         self._store['mac'] = tv_mac
         file_store.save_store(self._store)
+        print(f"host: {tv_host}, mac: {tv_mac}")
+
         self._discovered = True
 
     def connect(self):
