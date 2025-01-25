@@ -14,6 +14,7 @@ class TV:
 
     def _discover(self):
         if 'host' in self._store:
+            print("TV already discovered!", self._store)
             self._discovered = True
             return
 
@@ -35,38 +36,42 @@ class TV:
         self._discovered = True
 
     def connect(self):
-        self._discover()
+        try:
+            self._discover()
 
-        if self._connected:
-            return
+            if self._connected:
+                return
 
-        print('Connecting to TV...')
-        if 'host' not in self._store:
-            raise Exception("TV host not found!")
+            print('Connecting to TV...')
+            if 'host' not in self._store:
+                raise Exception("TV host not found!")
 
-        store = self._store
-        tv_host = store['host']
-        self._webos_client = tv_conn.WebOSClient(tv_host, secure=False)
-        self._webos_client.connect()
+            store = self._store
+            tv_host = store['host']
+            self._webos_client = tv_conn.WebOSClient(tv_host, secure=False)
+            self._webos_client.connect()
 
-        for status in self._webos_client.register(store):
-            if status == tv_conn.WebOSClient.PROMPTED:
-                print("Please accept the connect on the TV!")
-            elif status == tv_conn.WebOSClient.REGISTERED:
-                print("Registration successful!")
+            for status in self._webos_client.register(store):
+                if status == tv_conn.WebOSClient.PROMPTED:
+                    print("Please accept the connect on the TV!")
+                elif status == tv_conn.WebOSClient.REGISTERED:
+                    print("Registration successful!")
 
-        print(store)
-        file_store.save_store(store)
+            print(store)
+            file_store.save_store(store)
 
-        self._meida_ctl = tv_cntl.MediaControl(self._webos_client)
-        self._tv_ctl = tv_cntl.TvControl(self._webos_client)
-        self._system_ctl = tv_cntl.SystemControl(self._webos_client)
-        self._application_ctl = tv_cntl.ApplicationControl(self._webos_client)
-        self._input_ctl = tv_cntl.InputControl(self._webos_client)
-        self._source_ctl = tv_cntl.SourceControl(self._webos_client)
-        self._input_ctl.connect_input()
+            self._meida_ctl = tv_cntl.MediaControl(self._webos_client)
+            self._tv_ctl = tv_cntl.TvControl(self._webos_client)
+            self._system_ctl = tv_cntl.SystemControl(self._webos_client)
+            self._application_ctl = tv_cntl.ApplicationControl(self._webos_client)
+            self._input_ctl = tv_cntl.InputControl(self._webos_client)
+            self._source_ctl = tv_cntl.SourceControl(self._webos_client)
+            self._input_ctl.connect_input()
 
-        self._connected = True
+            self._connected = True
+        except Exception as e:
+            print(f"Caught an exception while connect tv: {e}")
+            raise e
 
     def disconnect(self):
         if self._connected:
