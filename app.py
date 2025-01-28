@@ -23,4 +23,8 @@ def handle_exception(e):
 
 
 if __name__ == '__main__':
-    app.run()  # :5000
+    try:
+        app.run()  # :5000
+    except Exception as e:
+        print(f"Caught an exception on main: {e}")
+        sys.exit(-1)
